@@ -55,7 +55,8 @@ def get_account_insights(date_preset=None, time_range=None):
     else:
         params['date_preset'] = date_preset
     r = requests.get(url, params=params)
-    r.raise_for_status()
+    if not r.ok:
+        return {}
     data = r.json().get('data', [])
     return data[0] if data else {}
 
