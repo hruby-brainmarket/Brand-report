@@ -1,0 +1,373 @@
+{% macro render_ad_card(ad) %}
+<div class="ad-card">
+  {% if ad.creative_url %}
+    <div class="ad-creative-wrap">
+      <img class="ad-creative" src="{{ ad.creative_url }}" alt="Kreativa reklamy" loading="lazy" />
+      {% if ad.preview_url %}
+      <a class="ad-overlay" href="{{ ad.preview_url }}" target="_blank" rel="noopener">
+        <span class="ad-overlay-btn">{% if ad.creative_type == 'video' %}▶ Přehrát{% else %}Zobrazit{% endif %}</span>
+      </a>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="ad-creative-placeholder">Náhled nedostupný</div>
+  {% endif %}
+  <div class="ad-body">
+    <div class="ad-header">
+      <div class="ad-rank">{{ ad.rank }}</div>
+      <span class="ad-type-badge {{ ad.creative_type }}">
+        {% if ad.creative_type == 'video' %}Video
+        {% elif ad.creative_type == 'carousel' %}Carousel
+        {% elif ad.creative_type == 'image' %}Obrázek
+        {% else %}—{% endif %}
+      </span>
+    </div>
+    <div class="ad-name">{{ ad.name }}</div>
+    <div class="ad-stats">
+      <div class="ad-stat">
+        <span class="ad-stat-label">Reach</span>
+        <span class="ad-stat-value highlight">{{ ad.reach }}</span>
+      </div>
+      <div class="ad-stat">
+        <span class="ad-stat-label">Impressions</span>
+        <span class="ad-stat-value">{{ ad.impressions }}</span>
+      </div>
+      <div class="ad-stat">
+        <span class="ad-stat-label">Spend</span>
+        <span class="ad-stat-value">{{ ad.spend }}</span>
+      </div>
+      <div class="ad-stat">
+        <span class="ad-stat-label">Engagement</span>
+        <span class="ad-stat-value">{{ ad.engagement }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brainmarket.cz – Brand Report</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+    }
+
+    /* HEADER */
+    .header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 40px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .header-logo { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+    .header-logo span { color: #4ade80; }
+    .header-subtitle { font-size: 14px; color: #9ca3af; margin-top: 6px; }
+    .header-meta { text-align: right; }
+    .header-date { font-size: 13px; color: #6b7280; margin-top: 4px; }
+
+    /* TABS */
+    .tabs-bar {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 60px;
+      display: flex;
+      gap: 4px;
+    }
+    .tab-btn {
+      padding: 16px 24px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn:hover { color: #1a1a2e; }
+    .tab-btn.active { color: #1a1a2e; border-bottom-color: #4ade80; }
+
+    /* CONTAINER */
+    .container { max-width: 1280px; margin: 0 auto; padding: 48px 60px; }
+
+    .period-panel { display: none; }
+    .period-panel.active { display: block; }
+
+    /* SECTION TITLE */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    /* METRICS */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 56px;
+    }
+    .metric-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .metric-label {
+      font-size: 12px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 600;
+    }
+    .metric-value {
+      font-size: 30px;
+      font-weight: 800;
+      color: #1a1a2e;
+      margin-top: 10px;
+      line-height: 1;
+    }
+    .metric-desc {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 8px;
+    }
+
+    /* TOP ADS */
+    .ads-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 20px;
+    }
+    .ads-grid-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .ad-card {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+    }
+    .ad-creative-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      background: #e5e7eb;
+    }
+    .ad-creative {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.2s;
+    }
+    .ad-creative-wrap:hover .ad-creative { transform: scale(1.03); }
+    .ad-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .ad-creative-wrap:hover .ad-overlay { opacity: 1; }
+    .ad-overlay-btn {
+      background: #fff;
+      color: #1a1a2e;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+    .ad-creative-placeholder {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      font-size: 13px;
+    }
+    .ad-body { padding: 18px; flex: 1; display: flex; flex-direction: column; }
+    .ad-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .ad-rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #1a1a2e;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .ad-type-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+    .ad-type-badge.video    { background: #fef3c7; color: #d97706; }
+    .ad-type-badge.image    { background: #dbeafe; color: #2563eb; }
+    .ad-type-badge.carousel { background: #f3e8ff; color: #7c3aed; }
+    .ad-type-badge.unknown  { background: #f3f4f6; color: #9ca3af; }
+
+    .ad-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a1a2e;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ad-stats { border-top: 1px solid #f3f4f6; padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .ad-stat { display: flex; justify-content: space-between; align-items: center; }
+    .ad-stat-label { font-size: 11px; color: #9ca3af; }
+    .ad-stat-value { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+    .ad-stat-value.highlight { color: #16a34a; }
+
+    .empty-note { color: #9ca3af; font-size: 13px; margin-bottom: 48px; }
+
+    /* FOOTER */
+    .footer {
+      text-align: center;
+      padding: 32px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <div class="header-logo">Brain<span>market</span>.cz</div>
+      <div class="header-subtitle">Brand Report – Meta Ads</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-date">Generováno {{ generated_at }}</div>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    {% for period in periods %}
+    <button class="tab-btn {% if loop.first %}active{% endif %}"
+            onclick="switchTab('{{ period.key }}')"
+            id="tab-{{ period.key }}">
+      {{ period.label }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <div class="container">
+    {% for period in periods %}
+    <div class="period-panel {% if loop.first %}active{% endif %}" id="panel-{{ period.key }}">
+
+      <div class="section-title">Brandové metriky</div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Reach</div>
+          <div class="metric-value">{{ period.metrics.reach }}</div>
+          <div class="metric-desc">unikátních lidí</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Impressions</div>
+          <div class="metric-value">{{ period.metrics.impressions }}</div>
+          <div class="metric-desc">celkem zobrazení</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Frequency</div>
+          <div class="metric-value">{{ period.metrics.frequency }}</div>
+          <div class="metric-desc">zobrazení / člověk</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Spend</div>
+          <div class="metric-value">{{ period.metrics.spend }}</div>
+          <div class="metric-desc">celkové výdaje</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">CPM</div>
+          <div class="metric-value">{{ period.metrics.cpm }}</div>
+          <div class="metric-desc">cena za 1 000 zobrazení</div>
+        </div>
+      </div>
+
+      <div class="section-title">Top 3 nejengagovanější reklamy</div>
+      {% if period.top_engaged %}
+      <div class="ads-grid ads-grid-3" style="margin-bottom: 48px;">
+        {% for ad in period.top_engaged %}
+        {{ render_ad_card(ad) }}
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty-note" style="margin-bottom: 48px;">Žádná data v tomto období.</p>
+      {% endif %}
+
+      <div class="section-title">Top 5 videí – Reach</div>
+      {% if period.top_videos %}
+      <div class="ads-grid" style="margin-bottom: 48px;">
+        {% for ad in period.top_videos %}
+        {{ render_ad_card(ad) }}
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty-note">Žádná videa v tomto období.</p>
+      {% endif %}
+
+      <div class="section-title">Top 5 bannerů – Reach</div>
+      {% if period.top_statics %}
+      <div class="ads-grid">
+        {% for ad in period.top_statics %}
+        {{ render_ad_card(ad) }}
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty-note">Žádné bannery v tomto období.</p>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="footer">
+    Brainmarket.cz · Brand Report · {{ generated_at }}
+  </div>
+
+  <script>
+    function switchTab(key) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.period-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-' + key).classList.add('active');
+      document.getElementById('panel-' + key).classList.add('active');
+    }
+  </script>
+
+</body>
+</html>
